@@ -7,6 +7,7 @@ public class BlogDbContext(DbContextOptions<BlogDbContext> options) : DbContext(
 {
     public DbSet<Article> Articles => Set<Article>();
     public DbSet<AdminUser> AdminUsers => Set<AdminUser>();
+    public DbSet<SiteSetting> SiteSettings => Set<SiteSetting>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -26,6 +27,13 @@ public class BlogDbContext(DbContextOptions<BlogDbContext> options) : DbContext(
             entity.Property(x => x.Email).HasMaxLength(200).IsRequired();
             entity.Property(x => x.PasswordHash).IsRequired();
             entity.HasIndex(x => x.Email).IsUnique();
+        });
+
+        modelBuilder.Entity<SiteSetting>(entity =>
+        {
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.SiteTitle).HasMaxLength(200).IsRequired();
+            entity.Property(x => x.NavigationLabel).HasMaxLength(100).IsRequired();
         });
     }
 }

@@ -111,6 +111,37 @@ app.MapGet("/api/articles/{slug}", async (string slug, BlogDbContext db) =>
     return item is null ? Results.NotFound() : Results.Ok(item);
 });
 
+app.MapGet("/api/site-settings", async (BlogDbContext db) =>
+{
+    var settings = await db.SiteSettings.OrderBy(x => x.UpdatedAt).FirstOrDefaultAsync();
+    return settings is null ? Results.NotFound() : Results.Ok(SiteSettingsResponse.FromEntity(settings));
+});
+
+app.MapPut("/api/admin/site-settings", async (UpdateSiteSettingsRequest request, BlogDbContext db) =>
+{
+    var settings = await db.SiteSettings.OrderBy(x => x.UpdatedAt).FirstOrDefaultAsync();
+    if (settings is null)
+    {
+        settings = new SiteSetting
+        {
+            Id = Guid.NewGuid(),
+            SiteTitle = request.SiteTitle.Trim(),
+            NavigationLabel = request.NavigationLabel.Trim(),
+            UpdatedAt = DateTime.UtcNow
+        };
+        db.SiteSettings.Add(settings);
+    }
+    else
+    {
+        settings.SiteTitle = request.SiteTitle.Trim();
+        settings.NavigationLabel = request.NavigationLabel.Trim();
+        settings.UpdatedAt = DateTime.UtcNow;
+    }
+
+    await db.SaveChangesAsync();
+    return Results.Ok(SiteSettingsResponse.FromEntity(settings));
+}).RequireAuthorization();
+
 app.MapGet("/api/admin/articles", async (BlogDbContext db) =>
 {
     var items = await db.Articles

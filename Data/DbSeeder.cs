@@ -40,6 +40,17 @@ public static class DbSeeder
             });
         }
 
+        if (!await db.SiteSettings.AnyAsync())
+        {
+            db.SiteSettings.Add(new SiteSetting
+            {
+                Id = Guid.NewGuid(),
+                SiteTitle = "Simple Blog",
+                NavigationLabel = "Blog",
+                UpdatedAt = DateTime.UtcNow
+            });
+        }
+
         await db.SaveChangesAsync();
     }
 }
