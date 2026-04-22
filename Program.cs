@@ -44,7 +44,10 @@ builder.Services.AddCors(options =>
 });
 
 var app = builder.Build();
+var uploadsDir = Path.Combine(app.Environment.ContentRootPath, "wwwroot", "uploads");
+Directory.CreateDirectory(uploadsDir);
 
+app.UseStaticFiles();
 app.UseSwagger();
 app.UseSwaggerUI();
 app.UseCors("frontend");
@@ -116,6 +119,36 @@ app.MapGet("/api/site-settings", async (BlogDbContext db) =>
     var settings = await db.SiteSettings.OrderBy(x => x.UpdatedAt).FirstOrDefaultAsync();
     return settings is null ? Results.NotFound() : Results.Ok(SiteSettingsResponse.FromEntity(settings));
 });
+
+app.MapPost("/api/admin/upload-image", async (HttpRequest request) =>
+{
+    if (!request.HasFormContentType)
+    {
+        return Results.BadRequest(new { message = "Form data expected." });
+    }
+
+    var form = await request.ReadFormAsync();
+    var file = form.Files.FirstOrDefault();
+    if (file is null || file.Length == 0)
+    {
+        return Results.BadRequest(new { message = "File is required." });
+    }
+
+    var allowedTypes = new[] { "image/jpeg", "image/png", "image/webp", "image/gif" };
+    if (!allowedTypes.Contains(file.ContentType))
+    {
+        return Results.BadRequest(new { message = "Unsupported image type." });
+    }
+
+    var ext = Path.GetExtension(file.FileName);
+    var fileName = $"{Guid.NewGuid()}{ext}";
+    var path = Path.Combine(uploadsDir, fileName);
+
+    await using var stream = File.Create(path);
+    await file.CopyToAsync(stream);
+
+    return Results.Ok(new UploadImageResponse($"/uploads/{fileName}"));
+}).RequireAuthorization();
 
 app.MapPut("/api/admin/site-settings", async (UpdateSiteSettingsRequest request, BlogDbContext db) =>
 {
