@@ -47,6 +47,7 @@ public static class DbSeeder
                 Id = Guid.NewGuid(),
                 SiteTitle = "Simple Blog",
                 NavigationLabel = "Blog",
+                HeaderLinksJson = "[{\"label\":\"блог\",\"url\":\"/\"}]",
                 UpdatedAt = DateTime.UtcNow
             });
         }

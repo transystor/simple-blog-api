@@ -152,6 +152,19 @@ app.MapPost("/api/admin/upload-image", async (HttpRequest request) =>
 
 app.MapPut("/api/admin/site-settings", async (UpdateSiteSettingsRequest request, BlogDbContext db) =>
 {
+    var normalizedLinks = request.HeaderLinks
+        .Select(x => new HeaderLinkDto(x.Label.Trim(), string.IsNullOrWhiteSpace(x.Url) ? "/" : x.Url.Trim()))
+        .Where(x => !string.IsNullOrWhiteSpace(x.Label))
+        .ToList();
+
+    if (normalizedLinks.Count == 0)
+    {
+        normalizedLinks.Add(new HeaderLinkDto("блог", "/"));
+    }
+
+    var primaryLabel = normalizedLinks[0].Label;
+    var headerLinksJson = System.Text.Json.JsonSerializer.Serialize(normalizedLinks);
+
     var settings = await db.SiteSettings.OrderBy(x => x.UpdatedAt).FirstOrDefaultAsync();
     if (settings is null)
     {
@@ -159,7 +172,8 @@ app.MapPut("/api/admin/site-settings", async (UpdateSiteSettingsRequest request,
         {
             Id = Guid.NewGuid(),
             SiteTitle = request.SiteTitle.Trim(),
-            NavigationLabel = request.NavigationLabel.Trim(),
+            NavigationLabel = primaryLabel,
+            HeaderLinksJson = headerLinksJson,
             UpdatedAt = DateTime.UtcNow
         };
         db.SiteSettings.Add(settings);
@@ -167,7 +181,8 @@ app.MapPut("/api/admin/site-settings", async (UpdateSiteSettingsRequest request,
     else
     {
         settings.SiteTitle = request.SiteTitle.Trim();
-        settings.NavigationLabel = request.NavigationLabel.Trim();
+        settings.NavigationLabel = primaryLabel;
+        settings.HeaderLinksJson = headerLinksJson;
         settings.UpdatedAt = DateTime.UtcNow;
     }
 

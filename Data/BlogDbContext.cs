@@ -34,6 +34,7 @@ public class BlogDbContext(DbContextOptions<BlogDbContext> options) : DbContext(
             entity.HasKey(x => x.Id);
             entity.Property(x => x.SiteTitle).HasMaxLength(200).IsRequired();
             entity.Property(x => x.NavigationLabel).HasMaxLength(100).IsRequired();
+            entity.Property(x => x.HeaderLinksJson).HasColumnType("text").IsRequired();
         });
     }
 }
