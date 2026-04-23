@@ -7,6 +7,7 @@ using Microsoft.IdentityModel.Tokens;
 using SimpleBlog.Api.Data;
 using SimpleBlog.Api.Dtos;
 using SimpleBlog.Api.Models;
+using System.Net;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -42,6 +43,67 @@ builder.Services.AddCors(options =>
     options.AddPolicy("frontend", policy =>
         policy.AllowAnyHeader().AllowAnyMethod().AllowAnyOrigin());
 });
+
+
+static string HtmlEncode(string? value) => WebUtility.HtmlEncode(value ?? string.Empty);
+static string BuildArticleHtml(Article article, SiteSetting? settings, HttpRequest request)
+{
+    var siteTitle = settings?.SiteTitle?.Trim();
+    var articleUrl = $"{request.Scheme}://{request.Host}/iv/articles/{article.Slug}";
+    var previewImage = System.Text.RegularExpressions.Regex.Match(article.Content ?? string.Empty, "<img[^>]+src=\"([^\"]+)\"", System.Text.RegularExpressions.RegexOptions.IgnoreCase).Groups[1].Value;
+    var safeTitle = HtmlEncode(article.Title);
+    var safeSummary = HtmlEncode(article.Summary);
+    var safeSiteTitle = HtmlEncode(string.IsNullOrWhiteSpace(siteTitle) ? "круглог" : siteTitle);
+    var published = article.PublishedAt?.ToString("yyyy-MM-ddTHH:mm:ssZ") ?? DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ");
+    var publishedLabel = article.PublishedAt?.ToLocalTime().ToString("dd.MM.yyyy HH:mm") ?? string.Empty;
+    var imageMeta = string.IsNullOrWhiteSpace(previewImage)
+        ? string.Empty
+        : $"<meta property=\"og:image\" content=\"{HtmlEncode(previewImage)}\" />";
+
+    var html = $$"""
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{{safeTitle}}</title>
+  <meta name="description" content="{{safeSummary}}" />
+  <meta property="og:type" content="article" />
+  <meta property="og:title" content="{{safeTitle}}" />
+  <meta property="og:description" content="{{safeSummary}}" />
+  <meta property="og:url" content="{{HtmlEncode(articleUrl)}}" />
+  <meta property="og:site_name" content="{{safeSiteTitle}}" />
+  {{imageMeta}}
+  <style>
+    body { margin: 0; font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f3f4f6; color: #111827; }
+    .container { max-width: 860px; margin: 0 auto; padding: 24px; }
+    article { background: #fff; border-radius: 16px; padding: 28px; box-shadow: 0 8px 30px rgba(0,0,0,.06); }
+    h1 { margin: 0 0 12px; font-size: 2.2rem; line-height: 1.1; }
+    .meta { color: #6b7280; margin-bottom: 16px; }
+    .summary { font-size: 1.05rem; color: #374151; margin-bottom: 20px; }
+    .content { line-height: 1.6; }
+    .content p { margin: 0 0 1em; line-height: 1.6; }
+    .content img { max-width: 100%; height: auto; display: block; clear: both; float: none !important; }
+    .content img[align='left'] { margin-left: 0; margin-right: auto; }
+    .content img[align='center'] { margin-left: auto; margin-right: auto; }
+    .content img[align='right'] { margin-left: auto; margin-right: 0; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <article>
+      <h1>{{safeTitle}}</h1>
+      <div class="meta"><time datetime="{{published}}">{{publishedLabel}}</time></div>
+      <p class="summary">{{safeSummary}}</p>
+      <div class="content">{{article.Content}}</div>
+    </article>
+  </div>
+</body>
+</html>
+""";
+
+    return html;
+}
 
 var app = builder.Build();
 var uploadsDir = Path.Combine(AppContext.BaseDirectory, "wwwroot", "uploads");
@@ -118,6 +180,22 @@ app.MapGet("/api/site-settings", async (BlogDbContext db) =>
 {
     var settings = await db.SiteSettings.OrderBy(x => x.UpdatedAt).FirstOrDefaultAsync();
     return settings is null ? Results.NotFound() : Results.Ok(SiteSettingsResponse.FromEntity(settings));
+});
+
+app.MapGet("/iv/articles/{slug}", async (string slug, HttpRequest request, BlogDbContext db) =>
+{
+    var article = await db.Articles
+        .Where(x => x.Slug == slug && x.Status == ArticleStatus.Published)
+        .FirstOrDefaultAsync();
+
+    if (article is null)
+    {
+        return Results.NotFound();
+    }
+
+    var settings = await db.SiteSettings.OrderBy(x => x.UpdatedAt).FirstOrDefaultAsync();
+    var html = BuildArticleHtml(article, settings, request);
+    return Results.Content(html, "text/html; charset=utf-8");
 });
 
 app.MapPost("/api/admin/upload-image", async (HttpRequest request) =>
