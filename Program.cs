@@ -78,7 +78,7 @@ static string BuildArticleHtml(Article article, SiteSetting? settings, HttpReque
   <style>
     body { margin: 0; font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f3f4f6; color: #111827; }
     .container { max-width: 860px; margin: 0 auto; padding: 24px; }
-    article { background: #fff; border-radius: 16px; padding: 28px; box-shadow: 0 8px 30px rgba(0,0,0,.06); }
+    article { position: relative; background: #fff; border-radius: 16px; padding: 28px 28px 64px; box-shadow: 0 8px 30px rgba(0,0,0,.06); }
     h1 { margin: 0 0 12px; font-size: 2.2rem; line-height: 1.1; }
     .meta { color: #6b7280; margin-bottom: 16px; }
     .summary { font-size: 1.05rem; color: #374151; margin-bottom: 20px; }
@@ -88,6 +88,8 @@ static string BuildArticleHtml(Article article, SiteSetting? settings, HttpReque
     .content img[align='left'] { margin-left: 0; margin-right: auto; }
     .content img[align='center'] { margin-left: auto; margin-right: auto; }
     .content img[align='right'] { margin-left: auto; margin-right: 0; }
+    .views { display: inline-flex; align-items: center; gap: 8px; position: absolute; right: 28px; bottom: 24px; color: #6b7280; font-size: .95rem; }
+    .views img { width: 30px; height: 30px; object-fit: contain; }
   </style>
 </head>
 <body>
@@ -96,6 +98,7 @@ static string BuildArticleHtml(Article article, SiteSetting? settings, HttpReque
       <h1>{{safeTitle}}</h1>
       <div class="meta"><time datetime="{{published}}">{{publishedLabel}}</time></div>
       <div class="content">{{article.Content}}</div>
+      <div class="views"><img src="https://kruglog.ru/eye.png" alt="Просмотры" /><span>{{article.TotalViews}}</span></div>
     </article>
   </div>
 </body>
