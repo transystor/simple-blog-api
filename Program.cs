@@ -49,7 +49,7 @@ static string HtmlEncode(string? value) => WebUtility.HtmlEncode(value ?? string
 static string BuildArticleHtml(Article article, SiteSetting? settings, HttpRequest request)
 {
     var siteTitle = settings?.SiteTitle?.Trim();
-    var articleUrl = $"{request.Scheme}://{request.Host}/iv/articles/{article.Slug}";
+    var articleUrl = $"{request.Scheme}://{request.Host}{request.Path}";
     var previewImage = System.Text.RegularExpressions.Regex.Match(article.Content ?? string.Empty, "<img[^>]+src=\"([^\"]+)\"", System.Text.RegularExpressions.RegexOptions.IgnoreCase).Groups[1].Value;
     var safeTitle = HtmlEncode(article.Title);
     var safeSummary = HtmlEncode(article.Summary);
@@ -73,6 +73,7 @@ static string BuildArticleHtml(Article article, SiteSetting? settings, HttpReque
   <meta property="og:description" content="{{safeSummary}}" />
   <meta property="og:url" content="{{HtmlEncode(articleUrl)}}" />
   <meta property="og:site_name" content="{{safeSiteTitle}}" />
+  <link rel="canonical" href="{{HtmlEncode(articleUrl)}}" />
   {{imageMeta}}
   <style>
     body { margin: 0; font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f3f4f6; color: #111827; }
