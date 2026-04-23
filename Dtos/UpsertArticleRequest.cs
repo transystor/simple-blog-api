@@ -7,4 +7,5 @@ public record UpsertArticleRequest(
     string Summary,
     string Content,
     string? Slug,
-    ArticleStatus Status);
+    ArticleStatus Status,
+    List<string>? Tags);

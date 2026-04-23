@@ -155,15 +155,22 @@ app.MapPost("/api/auth/login", async (LoginRequest request, BlogDbContext db) =>
     return Results.Ok(new AuthResponse(new JwtSecurityTokenHandler().WriteToken(token)));
 });
 
-app.MapGet("/api/articles", async (BlogDbContext db) =>
+app.MapGet("/api/articles", async (string? tag, BlogDbContext db) =>
 {
     var items = await db.Articles
         .Where(x => x.Status == ArticleStatus.Published)
         .OrderByDescending(x => x.PublishedAt)
-        .Select(x => ArticleResponse.FromEntity(x))
         .ToListAsync();
 
-    return Results.Ok(items);
+    if (!string.IsNullOrWhiteSpace(tag))
+    {
+        var normalizedTag = tag.Trim().ToLowerInvariant();
+        items = items
+            .Where(x => x.GetTags().Any(t => t.Trim().ToLowerInvariant() == normalizedTag))
+            .ToList();
+    }
+
+    return Results.Ok(items.Select(ArticleResponse.FromEntity));
 });
 
 app.MapGet("/api/articles/{slug}", async (string slug, BlogDbContext db) =>
@@ -234,13 +241,16 @@ app.MapPost("/api/admin/upload-image", async (HttpRequest request) =>
 app.MapPut("/api/admin/site-settings", async (UpdateSiteSettingsRequest request, BlogDbContext db) =>
 {
     var normalizedLinks = request.HeaderLinks
-        .Select(x => new HeaderLinkDto(x.Label.Trim(), string.IsNullOrWhiteSpace(x.Url) ? "/" : x.Url.Trim()))
+        .Select(x => new HeaderLinkDto(
+            x.Label.Trim(),
+            string.Equals(x.Type, "tag", StringComparison.OrdinalIgnoreCase) ? "tag" : "url",
+            string.IsNullOrWhiteSpace(x.Value) ? "/" : x.Value.Trim()))
         .Where(x => !string.IsNullOrWhiteSpace(x.Label))
         .ToList();
 
     if (normalizedLinks.Count == 0)
     {
-        normalizedLinks.Add(new HeaderLinkDto("блог", "/"));
+        normalizedLinks.Add(new HeaderLinkDto("блог", "url", "/"));
     }
 
     var primaryLabel = normalizedLinks[0].Label;
@@ -293,7 +303,12 @@ app.MapPost("/api/admin/articles", async (UpsertArticleRequest request, BlogDbCo
         Status = request.Status,
         CreatedAt = DateTime.UtcNow,
         UpdatedAt = DateTime.UtcNow,
-        PublishedAt = request.Status == ArticleStatus.Published ? DateTime.UtcNow : null
+        PublishedAt = request.Status == ArticleStatus.Published ? DateTime.UtcNow : null,
+        TagsJson = System.Text.Json.JsonSerializer.Serialize((request.Tags ?? [])
+            .Select(x => x.Trim())
+            .Where(x => !string.IsNullOrWhiteSpace(x))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList())
     };
 
     db.Articles.Add(article);
@@ -311,6 +326,11 @@ app.MapPut("/api/admin/articles/{id:guid}", async (Guid id, UpsertArticleRequest
     article.Content = request.Content.Trim();
     article.Slug = string.IsNullOrWhiteSpace(request.Slug) ? SlugHelper.Generate(request.Title) : SlugHelper.Generate(request.Slug);
     article.Status = request.Status;
+    article.TagsJson = System.Text.Json.JsonSerializer.Serialize((request.Tags ?? [])
+        .Select(x => x.Trim())
+        .Where(x => !string.IsNullOrWhiteSpace(x))
+        .Distinct(StringComparer.OrdinalIgnoreCase)
+        .ToList());
     article.UpdatedAt = DateTime.UtcNow;
     article.PublishedAt = request.Status == ArticleStatus.Published ? article.PublishedAt ?? DateTime.UtcNow : null;
 

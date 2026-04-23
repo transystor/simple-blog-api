@@ -18,6 +18,7 @@ public class BlogDbContext(DbContextOptions<BlogDbContext> options) : DbContext(
             entity.Property(x => x.Summary).HasMaxLength(500).IsRequired();
             entity.Property(x => x.Content).IsRequired();
             entity.Property(x => x.Slug).HasMaxLength(200).IsRequired();
+            entity.Property(x => x.TagsJson).HasColumnType("text").IsRequired();
             entity.HasIndex(x => x.Slug).IsUnique();
         });
 

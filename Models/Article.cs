@@ -1,5 +1,7 @@
 namespace SimpleBlog.Api.Models;
 
+using System.Text.Json;
+
 public class Article
 {
     public Guid Id { get; set; }
@@ -11,4 +13,17 @@ public class Article
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
     public DateTime? PublishedAt { get; set; }
+    public string TagsJson { get; set; } = "[]";
+
+    public List<string> GetTags()
+    {
+        try
+        {
+            return JsonSerializer.Deserialize<List<string>>(TagsJson) ?? [];
+        }
+        catch
+        {
+            return [];
+        }
+    }
 }

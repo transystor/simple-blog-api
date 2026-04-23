@@ -11,12 +11,12 @@ public record SiteSettingsResponse(
     public static SiteSettingsResponse FromEntity(SiteSetting setting)
     {
         var links = string.IsNullOrWhiteSpace(setting.HeaderLinksJson)
-            ? new List<HeaderLinkDto> { new(setting.NavigationLabel, "/") }
-            : JsonSerializer.Deserialize<List<HeaderLinkDto>>(setting.HeaderLinksJson) ?? new List<HeaderLinkDto> { new(setting.NavigationLabel, "/") };
+            ? new List<HeaderLinkDto> { new(setting.NavigationLabel, "url", "/") }
+            : JsonSerializer.Deserialize<List<HeaderLinkDto>>(setting.HeaderLinksJson) ?? new List<HeaderLinkDto> { new(setting.NavigationLabel, "url", "/") };
 
         if (links.Count == 0)
         {
-            links.Add(new HeaderLinkDto(setting.NavigationLabel, "/"));
+            links.Add(new HeaderLinkDto(setting.NavigationLabel, "url", "/"));
         }
 
         return new SiteSettingsResponse(setting.SiteTitle, links, setting.UpdatedAt);
