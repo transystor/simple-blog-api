@@ -44,7 +44,7 @@ builder.Services.AddCors(options =>
 });
 
 var app = builder.Build();
-var uploadsDir = Path.Combine(app.Environment.ContentRootPath, "wwwroot", "uploads");
+var uploadsDir = Path.Combine(AppContext.BaseDirectory, "wwwroot", "uploads");
 Directory.CreateDirectory(uploadsDir);
 
 app.UseStaticFiles();
