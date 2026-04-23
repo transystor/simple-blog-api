@@ -244,13 +244,15 @@ app.MapPut("/api/admin/site-settings", async (UpdateSiteSettingsRequest request,
         .Select(x => new HeaderLinkDto(
             x.Label.Trim(),
             string.Equals(x.Type, "tag", StringComparison.OrdinalIgnoreCase) ? "tag" : "url",
-            string.IsNullOrWhiteSpace(x.Value) ? "/" : x.Value.Trim()))
+            string.IsNullOrWhiteSpace(x.Value) ? "/" : x.Value.Trim(),
+            x.Priority))
         .Where(x => !string.IsNullOrWhiteSpace(x.Label))
+        .OrderBy(x => x.Priority)
         .ToList();
 
     if (normalizedLinks.Count == 0)
     {
-        normalizedLinks.Add(new HeaderLinkDto("блог", "url", "/"));
+        normalizedLinks.Add(new HeaderLinkDto("блог", "url", "/", 0));
     }
 
     var primaryLabel = normalizedLinks[0].Label;
