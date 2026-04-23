@@ -95,7 +95,6 @@ static string BuildArticleHtml(Article article, SiteSetting? settings, HttpReque
     <article>
       <h1>{{safeTitle}}</h1>
       <div class="meta"><time datetime="{{published}}">{{publishedLabel}}</time></div>
-      <p class="summary">{{safeSummary}}</p>
       <div class="content">{{article.Content}}</div>
     </article>
   </div>
