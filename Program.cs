@@ -88,6 +88,8 @@ static string BuildArticleHtml(Article article, SiteSetting? settings, HttpReque
     .content img[align='left'] { margin-left: 0; margin-right: auto; }
     .content img[align='center'] { margin-left: auto; margin-right: auto; }
     .content img[align='right'] { margin-left: auto; margin-right: 0; }
+    .back { display: inline-flex; align-items: center; justify-content: center; position: absolute; left: 28px; bottom: 24px; }
+    .back img { width: 42px; height: 42px; object-fit: contain; }
     .views { display: inline-flex; align-items: center; gap: 8px; position: absolute; right: 28px; bottom: 24px; color: #6b7280; font-size: .95rem; }
     .views img { width: 30px; height: 30px; object-fit: contain; }
   </style>
@@ -98,6 +100,7 @@ static string BuildArticleHtml(Article article, SiteSetting? settings, HttpReque
       <h1>{{safeTitle}}</h1>
       <div class="meta"><time datetime="{{published}}">{{publishedLabel}}</time></div>
       <div class="content">{{article.Content}}</div>
+      <a class="back" href="/"><img src="https://kruglog.ru/back-arrow.png" alt="На главную" /></a>
       <div class="views"><img src="https://kruglog.ru/eye.png" alt="Просмотры" /><span>{{article.TotalViews}}</span></div>
     </article>
   </div>
