@@ -183,6 +183,38 @@ app.MapGet("/api/articles/{slug}", async (string slug, BlogDbContext db) =>
     return item is null ? Results.NotFound() : Results.Ok(item);
 });
 
+app.MapPost("/api/articles/{slug}/view", async (string slug, RegisterArticleViewRequest request, BlogDbContext db) =>
+{
+    if (string.IsNullOrWhiteSpace(request.VisitorId))
+    {
+        return Results.BadRequest(new { message = "VisitorId is required." });
+    }
+
+    var article = await db.Articles.FirstOrDefaultAsync(x => x.Slug == slug && x.Status == ArticleStatus.Published);
+    if (article is null)
+    {
+        return Results.NotFound();
+    }
+
+    article.TotalViews += 1;
+
+    var alreadyViewed = await db.ArticleViews.AnyAsync(x => x.ArticleId == article.Id && x.VisitorId == request.VisitorId);
+    if (!alreadyViewed)
+    {
+        db.ArticleViews.Add(new ArticleView
+        {
+            Id = Guid.NewGuid(),
+            ArticleId = article.Id,
+            VisitorId = request.VisitorId.Trim(),
+            CreatedAt = DateTime.UtcNow
+        });
+        article.UniqueViews += 1;
+    }
+
+    await db.SaveChangesAsync();
+    return Results.Ok(new { totalViews = article.TotalViews, uniqueViews = article.UniqueViews });
+});
+
 app.MapGet("/api/site-settings", async (BlogDbContext db) =>
 {
     var settings = await db.SiteSettings.OrderBy(x => x.UpdatedAt).FirstOrDefaultAsync();

@@ -14,6 +14,8 @@ public class Article
     public DateTime UpdatedAt { get; set; }
     public DateTime? PublishedAt { get; set; }
     public string TagsJson { get; set; } = "[]";
+    public int TotalViews { get; set; }
+    public int UniqueViews { get; set; }
 
     public List<string> GetTags()
     {

@@ -12,7 +12,9 @@ public record ArticleResponse(
     DateTime CreatedAt,
     DateTime UpdatedAt,
     DateTime? PublishedAt,
-    List<string> Tags)
+    List<string> Tags,
+    int TotalViews,
+    int UniqueViews)
 {
     public static ArticleResponse FromEntity(Article article) => new(
         article.Id,
@@ -24,5 +26,7 @@ public record ArticleResponse(
         article.CreatedAt,
         article.UpdatedAt,
         article.PublishedAt,
-        article.GetTags());
+        article.GetTags(),
+        article.TotalViews,
+        article.UniqueViews);
 }

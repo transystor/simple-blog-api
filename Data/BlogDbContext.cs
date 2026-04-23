@@ -6,6 +6,7 @@ namespace SimpleBlog.Api.Data;
 public class BlogDbContext(DbContextOptions<BlogDbContext> options) : DbContext(options)
 {
     public DbSet<Article> Articles => Set<Article>();
+    public DbSet<ArticleView> ArticleViews => Set<ArticleView>();
     public DbSet<AdminUser> AdminUsers => Set<AdminUser>();
     public DbSet<SiteSetting> SiteSettings => Set<SiteSetting>();
 
@@ -20,6 +21,13 @@ public class BlogDbContext(DbContextOptions<BlogDbContext> options) : DbContext(
             entity.Property(x => x.Slug).HasMaxLength(200).IsRequired();
             entity.Property(x => x.TagsJson).HasColumnType("text").IsRequired();
             entity.HasIndex(x => x.Slug).IsUnique();
+        });
+
+        modelBuilder.Entity<ArticleView>(entity =>
+        {
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.VisitorId).HasMaxLength(200).IsRequired();
+            entity.HasIndex(x => new { x.ArticleId, x.VisitorId }).IsUnique();
         });
 
         modelBuilder.Entity<AdminUser>(entity =>
