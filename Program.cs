@@ -91,7 +91,7 @@ static string BuildArticleHtml(Article article, SiteSetting? settings, HttpReque
     .back { display: inline-flex; align-items: center; justify-content: center; position: absolute; left: 28px; bottom: 24px; }
     .back img { width: 42px; height: 42px; object-fit: contain; }
     .views { display: inline-flex; align-items: center; gap: 8px; position: absolute; right: 28px; bottom: 24px; color: #6b7280; font-size: .95rem; }
-    .views img { width: 30px; height: 30px; object-fit: contain; }
+    .views img { width: 34px; height: 34px; object-fit: contain; }
   </style>
 </head>
 <body>
