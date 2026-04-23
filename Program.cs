@@ -182,7 +182,7 @@ app.MapGet("/api/site-settings", async (BlogDbContext db) =>
     return settings is null ? Results.NotFound() : Results.Ok(SiteSettingsResponse.FromEntity(settings));
 });
 
-app.MapGet("/iv/articles/{slug}", async (string slug, HttpRequest request, BlogDbContext db) =>
+async Task<IResult> RenderArticlePage(string slug, HttpRequest request, BlogDbContext db)
 {
     var article = await db.Articles
         .Where(x => x.Slug == slug && x.Status == ArticleStatus.Published)
@@ -196,7 +196,10 @@ app.MapGet("/iv/articles/{slug}", async (string slug, HttpRequest request, BlogD
     var settings = await db.SiteSettings.OrderBy(x => x.UpdatedAt).FirstOrDefaultAsync();
     var html = BuildArticleHtml(article, settings, request);
     return Results.Content(html, "text/html; charset=utf-8");
-});
+}
+
+app.MapGet("/iv/articles/{slug}", RenderArticlePage);
+app.MapGet("/articles/{slug}", RenderArticlePage);
 
 app.MapPost("/api/admin/upload-image", async (HttpRequest request) =>
 {
