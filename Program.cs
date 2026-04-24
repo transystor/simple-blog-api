@@ -49,7 +49,8 @@ static string HtmlEncode(string? value) => WebUtility.HtmlEncode(value ?? string
 static string BuildArticleHtml(Article article, SiteSetting? settings, HttpRequest request)
 {
     var siteTitle = settings?.SiteTitle?.Trim();
-    var articleUrl = $"{request.Scheme}://{request.Host}{request.Path}";
+    var publicScheme = request.Headers["X-Forwarded-Proto"].FirstOrDefault() ?? request.Scheme;
+    var articleUrl = $"{publicScheme}://{request.Host}{request.Path}";
     var previewImage = System.Text.RegularExpressions.Regex.Match(article.Content ?? string.Empty, "<img[^>]+src=\"([^\"]+)\"", System.Text.RegularExpressions.RegexOptions.IgnoreCase).Groups[1].Value;
     var safeTitle = HtmlEncode(article.Title);
     var safeSummary = HtmlEncode(article.Summary);
